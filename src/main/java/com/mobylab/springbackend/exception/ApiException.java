@@ -1,7 +1,5 @@
 package com.mobylab.springbackend.exception;
 
-import com.mobylab.springbackend.exception.ErrorCodes;
-
 public class ApiException extends RuntimeException {
     private final ErrorCodes errorCode;
 
