@@ -9,6 +9,7 @@ import com.mobylab.springbackend.service.dto.OrderDto;
 import com.mobylab.springbackend.service.dto.OrderModificationDto;
 import com.mobylab.springbackend.service.dto.OrderPlacementDto;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
@@ -25,19 +26,19 @@ public class OrderController implements SecuredRestController {
     }
 
     @GetMapping
-    //@PreAuthorize("hasAuthority('USER') or hasAuthority('ADMIN')")
+    @PreAuthorize("hasAuthority('USER') or hasAuthority('ADMIN')")
     public ResponseEntity<List<OrderDto>> getAll() {
         return ResponseEntity.status(200).body(orderService.getAll());
     }
 
     @GetMapping("/my")
-    // @PreAuthorize("hasAuthority('USER') or hasAuthority('ADMIN')")
+    @PreAuthorize("hasAuthority('USER')")
     public ResponseEntity<List<OrderDto>> getMyOrders(Principal principal) {
         return ResponseEntity.ok(orderService.getMyOrders(principal));
     }
 
     @PostMapping("/placeOrder")
-    // @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasAuthority('USER')")
     public ResponseEntity<OrderDto> placeOrder(@RequestBody OrderPlacementDto orderPlacementDto, Principal principal) {
 
         if (orderPlacementDto.getType().toUpperCase().equals(Order.Type.BUY.toString())) {
@@ -50,21 +51,21 @@ public class OrderController implements SecuredRestController {
     }
 
     @GetMapping("/getOrder/{id}")
-    // @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasAuthority('USER') or hasAuthority('ADMIN')")
     public ResponseEntity<OrderDto> getOrderById(@PathVariable Long id) {
         OrderDto orderDto = orderService.getOrderById(id);
         return ResponseEntity.ok(orderDto);
     }
 
     @PatchMapping("/modifyOrder/{id}")
-    // @PreAuthorize("hasAuthority('USER') or hasAuthority('ADMIN')")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<OrderDto> modifyOrder(@PathVariable Long id, @RequestBody OrderModificationDto orderModificationDto, Principal principal) {
         OrderDto orderDto = orderService.modifyOrder(id, orderModificationDto, principal);
         return ResponseEntity.ok(orderDto);
     }
 
     @DeleteMapping("/cancelOrder/{id}")
-    // @PreAuthorize("hasAuthority('USER') or hasAuthority('ADMIN')")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<OrderDto> cancelOrder(@PathVariable Long id, Principal principal) {
         return ResponseEntity.ok(orderService.cancelOrder(id, principal));
     }

@@ -25,48 +25,48 @@ public class AssetController implements SecuredRestController {
     }
 
     @GetMapping
-    //@PreAuthorize("hasAuthority('USER') or hasAuthority('ADMIN')")
+    @PreAuthorize("hasAuthority('USER') or hasAuthority('ADMIN')")
     public ResponseEntity<List<AssetDto>> getAll(){
         return ResponseEntity.status(200).body(assetService.getAll());
     }
 
     @GetMapping("/getBySymbol/{symbol}")
-    // @PreAuthorize("hasAuthority('USER') or hasAuthority('ADMIN')")
+    @PreAuthorize("hasAuthority('USER') or hasAuthority('ADMIN')")
     public ResponseEntity<AssetDto> getAssetsBySymbol(@PathVariable String symbol) {
         AssetDto assetDto = assetService.getAssetBySymbol(symbol);
         return ResponseEntity.ok(assetDto);
     }
 
     @GetMapping("/getByPrefix/{prefix}")
-    // @PreAuthorize("hasAuthority('USER') or hasAuthority('ADMIN')")
+    @PreAuthorize("hasAuthority('USER') or hasAuthority('ADMIN')")
     public ResponseEntity<List<AssetDto>> getAssetsByPrefix(@PathVariable String prefix){
         List<AssetDto> assetDtoList = assetService.getAssetByPrefix(prefix);
         return ResponseEntity.status(200).body(assetDtoList);
     }
 
     @PostMapping("/addAsset")
-    // @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<AssetDto> addAsset(@RequestBody AssetCreateDto assetCreateDto) {
         AssetDto asset = assetService.addAsset(assetCreateDto);
         return ResponseEntity.status(201).body(asset);
     }
 
     @PatchMapping("/updateAssetPrice")
-    // @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<AssetDto> updateAssetPrice(@RequestBody AssetPriceUpdateDto assetPriceUpdateDto) {
         AssetDto updatedAsset = assetService.updateAssetPrice(assetPriceUpdateDto);
         return ResponseEntity.status(200).body(updatedAsset);
     }
 
     @PutMapping("/updateAsset/{id}")
-    // @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<AssetDto> updateAsset(@PathVariable Long id, @RequestBody AssetCreateDto assetCreateDto) {
         AssetDto updatedAsset = assetService.updateAsset(id, assetCreateDto);
         return ResponseEntity.status(200).body(updatedAsset);
     }
 
     @DeleteMapping("/deleteAsset/{id}")
-    // @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<Void> deleteAsset(@PathVariable Long id) {
         assetService.deleteAsset(id);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
