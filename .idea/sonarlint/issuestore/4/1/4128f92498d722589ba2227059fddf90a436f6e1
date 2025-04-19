@@ -1,7 +1,0 @@
-
-m
-java:S1192/"RDefine a constant instead of duplicating this literal "' does not exist." 4 times.(šå®©ÿÿÿÿÿ
-h
-java:S6204*"RReplace this usage of 'Stream.collect(Collectors.toList())' with 'Stream.toList()'(ö®¢ú
-h
-java:S62045"RReplace this usage of 'Stream.collect(Collectors.toList())' with 'Stream.toList()'(Üþ»ù
