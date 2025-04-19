@@ -13,6 +13,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     List<Order> findAll();
     List<Order> findByUserEmail(String email);
     List<Order> findAllByAsset(Asset asset);
+    List<Order> findAllByAssetAndStatus(Asset asset, Order.Status status);
 
     @Query("""
     SELECT o FROM Order o

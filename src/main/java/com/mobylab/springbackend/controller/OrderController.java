@@ -26,7 +26,7 @@ public class OrderController implements SecuredRestController {
     }
 
     @GetMapping
-    @PreAuthorize("hasAuthority('USER') or hasAuthority('ADMIN')")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<List<OrderDto>> getAll() {
         return ResponseEntity.status(200).body(orderService.getAll());
     }
@@ -57,16 +57,26 @@ public class OrderController implements SecuredRestController {
         return ResponseEntity.ok(orderDto);
     }
 
+    @GetMapping("/getActiveOrdersByAsset/{symbol}")
+    @PreAuthorize("hasAuthority('USER') or hasAuthority('ADMIN')")
+    public ResponseEntity<List<OrderDto>> getOrdersByAsset(@PathVariable String symbol) {
+        List<OrderDto> orderDtos = orderService.getActiveOrdersByAsset(symbol);
+        return ResponseEntity.ok(orderDtos);
+    }
+
     @PatchMapping("/modifyOrder/{id}")
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasAuthority('ADMIN') or hasAuthority('USER')")
     public ResponseEntity<OrderDto> modifyOrder(@PathVariable Long id, @RequestBody OrderModificationDto orderModificationDto, Principal principal) {
         OrderDto orderDto = orderService.modifyOrder(id, orderModificationDto, principal);
         return ResponseEntity.ok(orderDto);
     }
 
     @DeleteMapping("/cancelOrder/{id}")
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasAuthority('ADMIN') or hasAuthority('USER')")
     public ResponseEntity<OrderDto> cancelOrder(@PathVariable Long id, Principal principal) {
         return ResponseEntity.ok(orderService.cancelOrder(id, principal));
     }
+
+
+
 }

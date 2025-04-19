@@ -4,7 +4,9 @@ import com.mobylab.springbackend.entity.Asset;
 import com.mobylab.springbackend.entity.Holding;
 import com.mobylab.springbackend.entity.Transaction;
 import com.mobylab.springbackend.entity.User;
+import com.mobylab.springbackend.exception.ApiException;
 import com.mobylab.springbackend.exception.BadRequestException;
+import com.mobylab.springbackend.exception.ErrorCodes;
 import com.mobylab.springbackend.repository.AssetRepository;
 import com.mobylab.springbackend.repository.HoldingRepository;
 import com.mobylab.springbackend.repository.TransactionRepository;
@@ -41,7 +43,7 @@ public class TransactionService {
 
     public List<TransactionDto> getMyTransactions(Principal principal) {
         UUID userId = userRepository.findUserByEmail(principal.getName())
-                .orElseThrow(() -> new BadRequestException("User not found")).getId();
+                .orElseThrow(() -> new ApiException("User not found", ErrorCodes.UNAUTHORIZED_ACCESS)).getId();
         return transactionRepository.findByUserId(userId).stream()
                 .map(this::toDto)
                 .collect(Collectors.toList());

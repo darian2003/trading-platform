@@ -1,0 +1,9 @@
+
+A
+java:S1452"&Remove usage of generic wildcard type.(Íì°¦ûÿÿÿÿ
+e
+java:S4488"JReplace "@RequestMapping(method = RequestMethod.POST)" with "@PostMapping"(µ¿³åÿÿÿÿÿ
+y
+java:S1128"WRemove this unused import 'io.swagger.v3.oas.annotations.security.SecurityRequirement'.(Œ¶Ìùÿÿÿÿ8½‰±öã2
+P
+java:S1128"4Remove this unused import 'java.security.Principal'.(’ÛŞ[8½‰±öã2

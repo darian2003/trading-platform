@@ -4,7 +4,9 @@ import com.mobylab.springbackend.entity.Asset;
 import com.mobylab.springbackend.entity.Holding;
 import com.mobylab.springbackend.entity.Portfolio;
 import com.mobylab.springbackend.entity.User;
+import com.mobylab.springbackend.exception.ApiException;
 import com.mobylab.springbackend.exception.BadRequestException;
+import com.mobylab.springbackend.exception.ErrorCodes;
 import com.mobylab.springbackend.repository.AssetRepository;
 import com.mobylab.springbackend.repository.HoldingRepository;
 import com.mobylab.springbackend.repository.PortfolioRepository;
@@ -36,8 +38,8 @@ public class PortfolioService {
 
     public List<HoldingDto> getHoldings(Principal principal) {
 
-        User user = userRepository.findUserByEmail(principal.getName()).orElseThrow(() -> new BadRequestException("User not found"));
-        Portfolio portfolio = portfolioRepository.findByUserId(user.getId()).orElseThrow(() -> new BadRequestException("Portfolio not found"));
+        User user = userRepository.findUserByEmail(principal.getName()).orElseThrow(() -> new ApiException("User not found", ErrorCodes.UNAUTHORIZED_ACCESS));
+        Portfolio portfolio = portfolioRepository.findByUserId(user.getId()).orElseThrow(() -> new ApiException("Portfolio not found", ErrorCodes.PORTFOLIO_NOT_FOUND));
         List<Holding> holdingList = holdingRepository.findAllByPortfolioId(portfolio.getId());
 
         return holdingList.stream()
@@ -48,12 +50,12 @@ public class PortfolioService {
     public HoldingDto deposit(String symbol, Double quantity, Principal principal) {
 
         if (quantity <= 0) {
-            throw new BadRequestException("Quantity must be positive.");
+            throw new ApiException("Quantity must be positive.", ErrorCodes.INVALID_QUANTITY);
         }
 
-        User user = userRepository.findUserByEmail(principal.getName()).orElseThrow(() -> new BadRequestException("User not found"));
-        Portfolio portfolio = portfolioRepository.findByUserId(user.getId()).orElseThrow(() -> new BadRequestException("Portfolio not found"));
-        Asset asset = assetRepository.findBySymbol(symbol).orElseThrow(() -> new BadRequestException("Asset with symbol '" + symbol + "' does not exist."));
+        User user = userRepository.findUserByEmail(principal.getName()).orElseThrow(() -> new ApiException("User not found", ErrorCodes.UNAUTHORIZED_ACCESS));
+        Portfolio portfolio = portfolioRepository.findByUserId(user.getId()).orElseThrow(() -> new ApiException("Portfolio not found", ErrorCodes.PORTFOLIO_NOT_FOUND));
+        Asset asset = assetRepository.findBySymbol(symbol).orElseThrow(() -> new ApiException("Asset with symbol '" + symbol + "' does not exist.", ErrorCodes.ASSET_NOT_FOUND));
         Holding holding = holdingRepository.findByPortfolioAndAsset(portfolio, asset).orElseGet(() -> {
             Holding newHolding = new Holding();
             newHolding.setPortfolio(portfolio);
@@ -72,18 +74,18 @@ public class PortfolioService {
     public HoldingDto withdraw(String symbol, Double quantity, Principal principal) {
 
         if (quantity <= 0) {
-            throw new BadRequestException("Quantity must be positive.");
+            throw new ApiException("Quantity must be positive.", ErrorCodes.INVALID_QUANTITY);
         }
 
-        User user = userRepository.findUserByEmail(principal.getName()).orElseThrow(() -> new BadRequestException("User not found"));
-        Portfolio portfolio = portfolioRepository.findByUserId(user.getId()).orElseThrow(() -> new BadRequestException("Portfolio not found"));
-        Asset asset = assetRepository.findBySymbol(symbol).orElseThrow(() -> new BadRequestException("Asset with symbol '" + symbol + "' does not exist."));
-        Holding holding = holdingRepository.findByPortfolioAndAsset(portfolio, asset).orElseThrow(() -> new BadRequestException("Holding not found"));
+        User user = userRepository.findUserByEmail(principal.getName()).orElseThrow(() -> new ApiException("User not found", ErrorCodes.UNAUTHORIZED_ACCESS));
+        Portfolio portfolio = portfolioRepository.findByUserId(user.getId()).orElseThrow(() -> new ApiException("Portfolio not found", ErrorCodes.PORTFOLIO_NOT_FOUND));
+        Asset asset = assetRepository.findBySymbol(symbol).orElseThrow(() -> new ApiException("Asset with symbol '" + symbol + "' does not exist.", ErrorCodes.ASSET_NOT_FOUND));
+        Holding holding = holdingRepository.findByPortfolioAndAsset(portfolio, asset).orElseThrow(() -> new ApiException("Holding not found", ErrorCodes.PORTFOLIO_NOT_FOUND));
 
         double availableQuantity = holding.getQuantity() - holding.getReservedQuantity();
 
         if (availableQuantity < quantity) {
-            throw new BadRequestException("Not enough quantity to withdraw.");
+            throw new ApiException("Not enough quantity to withdraw.", ErrorCodes.INVALID_QUANTITY);
         }
 
         holding.setQuantity(holding.getQuantity() - quantity);

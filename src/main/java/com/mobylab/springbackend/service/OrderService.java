@@ -1,7 +1,9 @@
 package com.mobylab.springbackend.service;
 
 import com.mobylab.springbackend.entity.*;
+import com.mobylab.springbackend.exception.ApiException;
 import com.mobylab.springbackend.exception.BadRequestException;
+import com.mobylab.springbackend.exception.ErrorCodes;
 import com.mobylab.springbackend.exception.InternalServerErrorException;
 import com.mobylab.springbackend.repository.*;
 import com.mobylab.springbackend.service.dto.OrderModificationDto;
@@ -51,21 +53,21 @@ public class OrderService {
     public OrderDto placeBuyOrder(OrderPlacementDto dto, Principal principal) {
 
         if (dto.getQuantity() <= 0) {
-            throw new BadRequestException("Quantity needs to be positive");
+            throw new ApiException("Quantity needs to be positive", ErrorCodes.INVALID_QUANTITY);
         }
 
         if (dto.getPrice() <= 0) {
-            throw new BadRequestException("Price needs to be positive");
+            throw new ApiException("Price needs to be positive", ErrorCodes.INVALID_PRICE);
         }
 
         User user = userRepository.findUserByEmail(principal.getName())
-                .orElseThrow(() -> new BadRequestException("User not found"));
+                .orElseThrow(() -> new ApiException("User not found", ErrorCodes.UNAUTHORIZED_ACCESS));
         Portfolio buyerPortfolio = portfolioRepository.findByUserId(user.getId())
-                .orElseThrow(() -> new BadRequestException("Portfolio not found"));
+                .orElseThrow(() -> new ApiException("Portfolio not found", ErrorCodes.PORTFOLIO_NOT_FOUND));
         Asset asset = assetRepository.findBySymbol(dto.getAssetSymbol())
-                .orElseThrow(() -> new BadRequestException("Asset not found"));
+                .orElseThrow(() -> new ApiException("Asset not found", ErrorCodes.ASSET_NOT_FOUND));
         Asset usdAsset = assetRepository.findBySymbol("USD")
-                .orElseThrow(() -> new BadRequestException("USD Asset not found"));
+                .orElseThrow(() -> new ApiException("USD Asset not found", ErrorCodes.INTERNAL_ERROR));
 
         double reservedAmount = dto.getPrice() * dto.getQuantity();
 
@@ -83,7 +85,7 @@ public class OrderService {
             }
             
             Portfolio sellerPortfolio = portfolioRepository.findByUserId(match.getUser().getId())
-                    .orElseThrow(() -> new BadRequestException("Portfolio not found"));
+                    .orElseThrow(() -> new ApiException("Portfolio not found", ErrorCodes.ASSET_NOT_FOUND));
 
             Double quantity = Math.min(myOrder.getRemainingQuantity(), match.getRemainingQuantity());
             Double price = match.getPrice(); // Passive price wins
@@ -115,21 +117,21 @@ public class OrderService {
     public OrderDto placeSellOrder(OrderPlacementDto dto, Principal principal) {
 
         if (dto.getQuantity() <= 0) {
-            throw new BadRequestException("Quantity needs to be positive");
+            throw new ApiException("Quantity needs to be positive", ErrorCodes.INVALID_QUANTITY);
         }
 
         if (dto.getPrice() <= 0) {
-            throw new BadRequestException("Price needs to be positive");
+            throw new ApiException("Price needs to be positive", ErrorCodes.INVALID_PRICE);
         }
 
         User user = userRepository.findUserByEmail(principal.getName())
-                .orElseThrow(() -> new BadRequestException("User not found"));
+                .orElseThrow(() -> new ApiException("User not found", ErrorCodes.UNAUTHORIZED_ACCESS));
         Portfolio sellerPortfolio = portfolioRepository.findByUserId(user.getId())
-                .orElseThrow(() -> new BadRequestException("Portfolio not found"));
+                .orElseThrow(() -> new ApiException("Portfolio not found", ErrorCodes.PORTFOLIO_NOT_FOUND));
         Asset asset = assetRepository.findBySymbol(dto.getAssetSymbol())
-                .orElseThrow(() -> new BadRequestException("Asset not found"));
+                .orElseThrow(() -> new ApiException("Asset not found", ErrorCodes.ASSET_NOT_FOUND));
         Asset usdAsset = assetRepository.findBySymbol("USD")
-                .orElseThrow(() -> new BadRequestException("USD Asset not found"));
+                .orElseThrow(() -> new ApiException("USD Asset not found", ErrorCodes.INTERNAL_ERROR));
 
         double reservedAmount = dto.getQuantity();
 
@@ -147,7 +149,7 @@ public class OrderService {
             }
 
             Portfolio buyerPortfolio = portfolioRepository.findByUserId(match.getUser().getId())
-                    .orElseThrow(() -> new BadRequestException("Portfolio not found"));
+                    .orElseThrow(() -> new ApiException("Portfolio not found", ErrorCodes.PORTFOLIO_NOT_FOUND));
 
             Double quantity = Math.min(myOrder.getRemainingQuantity(), match.getRemainingQuantity());
             Double price = match.getPrice(); // Passive price wins
@@ -179,30 +181,38 @@ public class OrderService {
 
     public OrderDto getOrderById(Long orderId) {
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new BadRequestException("Order not found"));
+                .orElseThrow(() -> new ApiException("Order not found", ErrorCodes.ORDER_CREATION_FAILED));
         return toDto(order);
+    }
+
+    public List<OrderDto> getActiveOrdersByAsset(String symbol) {
+        Asset asset = assetRepository.findBySymbol(symbol)
+                .orElseThrow(() -> new ApiException("Asset not found", ErrorCodes.ASSET_NOT_FOUND));
+        List<Order> orders = orderRepository.findAllByAssetAndStatus(asset, Order.Status.ACTIVE);
+        return orders.stream()
+                .map(this::toDto).collect(Collectors.toList());
     }
 
     public OrderDto modifyOrder(Long orderId, OrderModificationDto dto, Principal principal) {
         User user = userRepository.findUserByEmail(principal.getName())
-                .orElseThrow(() -> new BadRequestException("User not found"));
+                .orElseThrow(() -> new ApiException("User not found", ErrorCodes.UNAUTHORIZED_ACCESS));
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new BadRequestException("Order not found"));
+                .orElseThrow(() -> new ApiException("Order not found", ErrorCodes.ORDER_CREATION_FAILED));
         if (!order.getUser().getEmail().equals(principal.getName())) {
-            throw new BadRequestException("You cannot modify this order");
+            throw new ApiException("You cannot modify this order", ErrorCodes.UNAUTHORIZED_ACCESS);
         }
         if (order.getStatus() == Order.Status.CANCELLED) {
-            throw new BadRequestException("Order already canceled");
+            throw new ApiException("Order already canceled", ErrorCodes.ORDER_CREATION_FAILED);
         }
         if (order.getStatus() == Order.Status.COMPLETED) {
-            throw new BadRequestException("Order has already been completed");
+            throw new ApiException("Order has already been completed", ErrorCodes.ORDER_CREATION_FAILED);
         }
         if (order.getFilledQuantity() >= dto.getNewQuantity()) {
-            throw new BadRequestException("The order has already been filled for that quantity");
+            throw new ApiException("The order has already been filled for that quantity", ErrorCodes.ORDER_CREATION_FAILED);
         }
 
         Portfolio portfolio = portfolioRepository.findByUserId(user.getId())
-                .orElseThrow(() -> new BadRequestException("Portfolio not found"));
+                .orElseThrow(() -> new ApiException("Portfolio not found", ErrorCodes.PORTFOLIO_NOT_FOUND));
         Asset asset = order.getType().equals(Order.Type.BUY)
                 ? assetRepository.findBySymbol("USD").orElseThrow(() -> new InternalServerErrorException("USD Asset not found"))
                 : assetRepository.findBySymbol(order.getAsset().getSymbol()).orElseThrow(() -> new InternalServerErrorException("Asset " + order.getAsset().getSymbol() + " not found"));
@@ -228,22 +238,22 @@ public class OrderService {
     public OrderDto cancelOrder(Long orderId, Principal principal) {
 
         User user = userRepository.findUserByEmail(principal.getName())
-                .orElseThrow(() -> new BadRequestException("User not found"));
+                .orElseThrow(() -> new ApiException("User not found", ErrorCodes.UNAUTHORIZED_ACCESS));
         Order order = orderRepository.findById(orderId)
 
-                .orElseThrow(() -> new BadRequestException("Order not found"));
+                .orElseThrow(() -> new ApiException("Order not found", ErrorCodes.ORDER_CREATION_FAILED));
         if (!order.getUser().getEmail().equals(principal.getName())) {
-            throw new BadRequestException("You cannot cancel this order");
+            throw new ApiException("You cannot cancel this order", ErrorCodes.UNAUTHORIZED_ACCESS);
         }
         if (order.getStatus().equals(Order.Status.COMPLETED)) {
-            throw new BadRequestException("Order is already filled or empty.");
+            throw new ApiException("Order is already filled or empty.", ErrorCodes.ORDER_CREATION_FAILED);
         }
         if (order.getStatus() == Order.Status.CANCELLED) {
-            throw new BadRequestException("Order already canceled");
+            throw new ApiException("Order already canceled", ErrorCodes.ORDER_CREATION_FAILED);
         }
 
         Portfolio portfolio = portfolioRepository.findByUserId(user.getId())
-                .orElseThrow(() -> new BadRequestException("Portfolio not found"));
+                .orElseThrow(() -> new ApiException("Portfolio not found", ErrorCodes.PORTFOLIO_NOT_FOUND));
         Asset asset = order.getType().equals(Order.Type.BUY)
                 ? assetRepository.findBySymbol("USD").orElseThrow(() -> new InternalServerErrorException("USD Asset not found"))
                 : assetRepository.findBySymbol(order.getAsset().getSymbol()).orElseThrow(() -> new InternalServerErrorException("Asset " + order.getAsset().getSymbol() + " not found"));
@@ -261,18 +271,18 @@ public class OrderService {
 
     private void reserveAsset(Asset a, Portfolio p, double qty) {
         Holding h = holdingRepository.findByPortfolioAndAsset(p, a)
-                .orElseThrow(() -> new BadRequestException("Asset not held"));
+                .orElseThrow(() -> new ApiException("Asset not held", ErrorCodes.ORDER_CREATION_FAILED));
         if (h.getAvailableQuantity() < qty)
-            throw new BadRequestException("Insufficient asset balance");
+            throw new ApiException("Insufficient asset balance", ErrorCodes.ORDER_CREATION_FAILED);
         h.setReservedQuantity(h.getReservedQuantity() + qty);
         holdingRepository.save(h);
     }
 
     private void unreserveAsset(Asset a, Portfolio p, double qty) {
         Holding h = holdingRepository.findByPortfolioAndAsset(p, a)
-                .orElseThrow(() -> new BadRequestException("Asset not held"));
+                .orElseThrow(() -> new ApiException("Asset not held", ErrorCodes.ORDER_CREATION_FAILED));
         if (h.getReservedQuantity() < qty)
-            throw new BadRequestException("Insufficient reserved asset balance");
+            throw new ApiException("Insufficient reserved asset balance", ErrorCodes.ORDER_CREATION_FAILED);
         h.setReservedQuantity(h.getReservedQuantity() - qty);
         holdingRepository.save(h);
     }

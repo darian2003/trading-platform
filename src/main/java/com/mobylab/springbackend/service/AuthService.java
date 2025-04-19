@@ -5,7 +5,9 @@ import com.mobylab.springbackend.entity.Asset;
 import com.mobylab.springbackend.entity.Portfolio;
 import com.mobylab.springbackend.entity.Role;
 import com.mobylab.springbackend.entity.User;
+import com.mobylab.springbackend.exception.ApiException;
 import com.mobylab.springbackend.exception.BadRequestException;
+import com.mobylab.springbackend.exception.ErrorCodes;
 import com.mobylab.springbackend.repository.PortfolioRepository;
 import com.mobylab.springbackend.repository.RoleRepository;
 import com.mobylab.springbackend.repository.UserRepository;
@@ -49,7 +51,7 @@ public class AuthService {
     public void register(RegisterDto registerDto) {
 
         if (userRepository.existsUserByEmail(registerDto.getEmail())) {
-            throw new BadRequestException("Email is already used");
+            throw new ApiException("Email is already used", ErrorCodes.EMAIL_ALREADY_EXISTS);
         }
 
         List<Role> roleList = new ArrayList<>();
@@ -70,7 +72,7 @@ public class AuthService {
     public String login(LoginDto loginDto) {
         Optional<User> optionalUser = userRepository.findUserByEmail(loginDto.getEmail());
         if (optionalUser.isEmpty()) {
-            throw new BadRequestException("Wrong credentials");
+            throw new ApiException("Wrong credentials", ErrorCodes.INVALID_CREDENTIAL);
         }
 
         Authentication authentication = authenticationManager.authenticate(
@@ -81,6 +83,8 @@ public class AuthService {
         return jwtGenerator.generateToken(authentication);
 
     }
+
+
 
     public List<UserDto> getAllUsers() {
         return userRepository.findAll().stream()

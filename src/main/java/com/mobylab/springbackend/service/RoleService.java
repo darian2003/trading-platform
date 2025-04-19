@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.security.Principal;
 import java.util.List;
 
 @Service
@@ -32,6 +33,12 @@ public class RoleService {
                     Role role = new Role().setName(name);
                     roleRepository.save(role);
                 })
+                .toList();
+    }
+
+    public List<String> getAllRoles() {
+        return roleRepository.findAll().stream()
+                .map(Role::getName)
                 .toList();
     }
 }

@@ -23,6 +23,18 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(errorObject, HttpStatus.BAD_REQUEST);
     }
 
+    @ExceptionHandler({ApiException.class})
+    public ResponseEntity<ErrorObject> handleApiRequest(RuntimeException ex, WebRequest request) {
+        ErrorObject errorObject = new ErrorObject();
+
+        errorObject
+                .setStatusCode(HttpStatus.BAD_REQUEST.value())
+                .setMessage(ex.getMessage())
+                .setErrorCode(((ApiException) ex).getErrorCode().name())
+                .setTimestamp(LocalDateTime.now());
+        return new ResponseEntity<>(errorObject, HttpStatus.BAD_REQUEST);
+    }
+
     @ExceptionHandler({InternalServerErrorException.class})
     public ResponseEntity<ErrorObject> handleInternalServerError(RuntimeException ex, WebRequest request) {
         ErrorObject errorObject = new ErrorObject();
