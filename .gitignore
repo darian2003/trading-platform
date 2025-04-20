@@ -1,1 +1,19 @@
-.idea/*
+# Maven build files
+/target/
+!.mvn/wrapper/maven-wrapper.jar
+
+# IDEs and editors
+/.idea/
+/*.iml
+*.class
+*.log
+
+# OS-specific
+.DS_Store
+Thumbs.db
+
+# Environment files
+*.env
+
+# Application-specific
+/application.yml
