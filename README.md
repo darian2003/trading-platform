@@ -1,18 +1,49 @@
-# MobyLabWebProgramming
+# Matching Engine Backend
 
-This is an example application to teach students the basics of web programming.
+This is a simple backend-only **Matching Engine** application built with **Spring Boot**. It supports order placement, basic asset and portfolio management, and a JWT-based authentication system. It is intended as a lightweight foundation for building trading platforms or learning about matching engine internals.
 
-To start working with the backend install docker and docker compose from https://docs.docker.com/engine/install/ and enter the command below to launch the Postgresql database while in the Deployment folder:
 
-```shell showLineNumbers
-docker-compose -f .\docker-compose.yml -p mobylab-app-db up -d
-```
+## Features
 
-You can use PGAdmin (https://www.pgadmin.org/) or DBeaver (https://dbeaver.io/download/) to access the database on localhost:5432 with database/user/password "postgres".
+-  **Assets**: Create and manage tradable assets with pricing.
+-  **Orders**: Place, modify, and match buy/sell orders.
+-  **Portfolios**: Track holdings and positions per user.
+-  **Authentication & Authorization**:
+  - JWT-based login & register.
+  - Role-based access control.
+-  **Transactions**: Persist matched trades.
+-  **Swagger/OpenAPI** integration for interactive API documentation.
+-  **Flyway** for database versioning & migration.
 
-In order to run the application you need to have maven installed (https://maven.apache.org/install.html) and run the following commands:
+---
 
-```shell showLineNumbers
-mvn clean install
-mvn spring-boot:run
-```
+##  Tech Stack
+
+- **Spring Boot**
+- **Spring Security + JWT**
+- **Spring Data JPA + Hibernate**
+- **H2/PostgreSQL (configurable)**
+- **Flyway** – DB migration
+- **Swagger/OpenAPI** – API documentation
+
+---
+
+##  Getting Started
+
+### Prerequisites
+
+- Java 17+
+- Maven 3.8+
+- Optional: PostgreSQL or run with in-memory H2 (default)
+
+##  Authentication
+
+This application uses **JWT (JSON Web Tokens)** for stateless authentication and role-based access control.
+
+
+##  Database Migrations
+
+The app uses **Flyway** for schema management
+
+
+
